@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black text-white">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vantabet – Social Casino</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Rubik', sans-serif; }
+    .peg { width: 8px; height: 8px; background: #a78bfa; border-radius: 50%; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-zinc-950 to-black">
+
+  <!-- Header -->
+  <header class="fixed top-0 w-full bg-black/80 backdrop-blur-md border-b border-zinc-800 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-8">
+        <h1 class="text-3xl font-bold tracking-tight text-purple-500">VANTABET</h1>
+        <div id="authArea"></div>
+      </div>
+      <div class="flex gap-6 items-center">
+        <button class="px-4 py-2 bg-zinc-800 rounded-lg hover:bg-zinc-700 transition">Balance: $<span id="balance">500.00</span></button>
+        <button class="px-6 py-2 bg-purple-600 rounded-lg font-semibold hover:bg-purple-500 transition">Deposit</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Admin Panel - only visible for Vantaadmin -->
+  <div id="adminPanel" class="fixed bottom-4 right-4 bg-zinc-900 border border-purple-700 rounded-lg p-4 shadow-2xl hidden z-50 w-80">
+    <h3 class="text-lg font-bold text-purple-400 mb-3">Admin Panel</h3>
+    
+    <div class="mb-4">
+      <label class="block text-sm text-zinc-400 mb-1">Set Balance</label>
+      <div class="flex gap-2">
+        <input type="number" id="adminSetBalance" class="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white" placeholder="New amount"/>
+        <button onclick="setAdminBalance()" class="px-4 py-2 bg-purple-700 hover:bg-purple-600 rounded-lg text-sm font-medium">Apply</button>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <input type="checkbox" id="showMinesToggle" class="w-5 h-5 accent-purple-600"/>
+      <label for="showMinesToggle" class="text-sm text-zinc-300">Reveal all mines after placing bet (debug)</label>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="pt-24 pb-8">
+    <div class="max-w-6xl mx-auto flex justify-center gap-10 border-b border-zinc-800">
+      <button onclick="showTab('home')" class="tab-btn px-6 py-4 text-lg font-semibold text-zinc-400 hover:text-white border-b-4 border-transparent hover:border-purple-600 transition">Home</button>
+      <button onclick="showTab('originals')" class="tab-btn px-6 py-4 text-lg font-semibold text-zinc-400 hover:text-white border-b-4 border-transparent hover:border-purple-600 transition">Originals</button>
+      <button onclick="showTab('games')" class="tab-btn px-6 py-4 text-lg font-semibold text-zinc-400 hover:text-white border-b-4 border-transparent hover:border-purple-600 transition">Games</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-6 pb-20">
+
+    <!-- Home -->
+    <section id="home" class="tab-content">
+      <div class="text-center my-12">
+        <h2 class="text-5xl font-bold text-purple-400 mb-4">Welcome to Vantabet</h2>
+        <p class="text-xl text-zinc-400">Play originals, slots, and more. Provably fair gaming.</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-zinc-900 rounded-xl p-6 text-center border border-zinc-800">
+          <h3 class="text-2xl font-bold mb-2">Casino</h3>
+        </div>
+        <div class="bg-zinc-900 rounded-xl p-6 text-center border border-zinc-800">
+          <h3 class="text-2xl font-bold mb-2">Originals</h3>
+        </div>
+        <div class="bg-zinc-900 rounded-xl p-6 text-center border border-zinc-800">
+          <h3 class="text-2xl font-bold mb-2">Promotions</h3>
+        </div>
+      </div>
+    </section>
+
+    <!-- Originals -->
+    <section id="originals" class="tab-content hidden">
+      <div class="text-center my-12">
+        <h2 class="text-5xl font-bold text-purple-400 mb-4">Originals</h2>
+        <p class="text-lg text-zinc-400">Provably fair instant games</p>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        <button onclick="showTab('crash')" class="bg-zinc-900 rounded-xl overflow-hidden hover:scale-105 transition border border-zinc-800">
+          <div class="h-32 bg-gradient-to-br from-green-900 to-green-600 flex items-center justify-center"><span class="text-3xl font-bold">CRASH</span></div>
+        </button>
+        <button onclick="showTab('dice')" class="bg-zinc-900 rounded-xl overflow-hidden hover:scale-105 transition border border-zinc-800">
+          <div class="h-32 bg-gradient-to-br from-blue-900 to-blue-600 flex items-center justify-center"><span class="text-3xl font-bold">DICE</span></div>
+        </button>
+        <button onclick="showTab('mines')" class="bg-zinc-900 rounded-xl overflow-hidden hover:scale-105 transition border border-zinc-800">
+          <div class="h-32 bg-gradient-to-br from-emerald-900 to-emerald-600 flex items-center justify-center"><span class="text-3xl font-bold">MINES</span></div>
+        </button>
+        <button onclick="showTab('plinko')" class="bg-zinc-900 rounded-xl overflow-hidden hover:scale-105 transition border border-zinc-800">
+          <div class="h-32 bg-gradient-to-br from-purple-900 to-purple-600 flex items-center justify-center"><span class="text-3xl font-bold">PLINKO</span></div>
+        </button>
+        <button onclick="showTab('limbo')" class="bg-zinc-900 rounded-xl overflow-hidden hover:scale-105 transition border border-zinc-800">
+          <div class="h-32 bg-gradient-to-br from-yellow-900 to-yellow-600 flex items-center justify-center"><span class="text-3xl font-bold">LIMBO</span></div>
+        </button>
+        <button onclick="showTab('blackjack')" class="bg-zinc-900 rounded-xl overflow-hidden hover:scale-105 transition border border-zinc-800">
+          <div class="h-32 bg-gradient-to-br from-red-900 to-red-600 flex items-center justify-center"><span class="text-3xl font-bold">BLACKJACK</span></div>
+        </button>
+      </div>
+    </section>
+
+    <!-- Games -->
+    <section id="games" class="tab-content hidden">
+      <div class="text-center my-12">
+        <h2 class="text-5xl font-bold text-purple-400 mb-4">Trending Games</h2>
+        <p class="text-lg text-zinc-400">Popular slots and casino games</p>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        <div class="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 hover:scale-105 transition">
+          <div class="h-32 bg-gradient-to-br from-orange-900 to-orange-600 flex items-center justify-center"><span class="text-3xl font-bold text-white">SWEET BONANZA</span></div>
+          <p class="p-3 text-sm text-center text-zinc-400">Pragmatic Play</p>
+        </div>
+        <div class="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 hover:scale-105 transition">
+          <div class="h-32 bg-gradient-to-br from-pink-900 to-pink-600 flex items-center justify-center"><span class="text-3xl font-bold text-white">GATES OF OLYMPUS</span></div>
+          <p class="p-3 text-sm text-center text-zinc-400">Pragmatic Play</p>
+        </div>
+        <div class="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 hover:scale-105 transition">
+          <div class="h-32 bg-gradient-to-br from-blue-900 to-blue-600 flex items-center justify-center"><span class="text-3xl font-bold text-white">BIG BASS BONANZA</span></div>
+          <p class="p-3 text-sm text-center text-zinc-400">Pragmatic Play</p>
+        </div>
+        <!-- More can be added here -->
+      </div>
+    </section>
+
+    <!-- PLINKO - Fully working -->
+    <section id="plinko" class="tab-content hidden">
+      <div class="text-center my-12">
+        <h2 class="text-5xl font-bold text-purple-400 mb-4">PLINKO</h2>
+        <p class="text-lg text-zinc-400">Drop the ball and watch it bounce to a multiplier</p>
+      </div>
+
+      <div class="flex flex-col items-center gap-8">
+        <div class="relative w-[520px] h-[420px] bg-zinc-900 rounded-xl border border-zinc-700 overflow-hidden">
+          <!-- Pegs -->
+          <div class="absolute inset-0 flex flex-col justify-between py-10 px-8">
+            ${Array(11).fill().map((_, row) => `
+              <div class="flex justify-${row % 2 === 0 ? 'between' : 'evenly'}">
+                ${Array(row % 2 === 0 ? 9 : 8).fill().map(() => `<div class="peg"></div>`).join('')}
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Ball -->
+          <div id="plinkoBall" class="absolute w-8 h-8 bg-yellow-400 rounded-full shadow-xl hidden transition-all duration-75 ease-linear"></div>
+
+          <!-- Bins -->
+          <div class="absolute bottom-0 left-0 right-0 h-20 flex justify-between px-6 items-end pb-4 bg-gradient-to-t from-black to-transparent">
+            <span class="text-sm font-bold text-red-400 w-[11%] text-center">0.2x</span>
+            <span class="text-sm font-bold text-orange-400 w-[11%] text-center">0.5x</span>
+            <span class="text-sm font-bold text-yellow-400 w-[11%] text-center">1x</span>
+            <span class="text-sm font-bold text-green-400 w-[11%] text-center">2x</span>
+            <span class="text-sm font-bold text-emerald-400 w-[11%] text-center">5x</span>
+            <span class="text-sm font-bold text-teal-400 w-[11%] text-center">10x</span>
+            <span class="text-sm font-bold text-cyan-400 w-[11%] text-center">25x</span>
+            <span class="text-sm font-bold text-purple-400 w-[11%] text-center">50x</span>
+            <span class="text-sm font-bold text-pink-400 w-[11%] text-center">100x</span>
+          </div>
+        </div>
+
+        <div class="flex gap-6 flex-wrap justify-center">
+          <input type="number" id="plinkoBet" placeholder="Bet amount ($)" class="w-48 px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center focus:outline-none focus:border-purple-500"/>
+          <button onclick="playPlinko()" class="px-12 py-4 bg-purple-600 hover:bg-purple-500 rounded-lg text-xl font-bold">DROP BALL</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- MINES (with admin debug toggle) -->
+    <section id="mines" class="tab-content hidden">
+      <div class="text-center my-12">
+        <h2 class="text-5xl font-bold text-emerald-400 mb-4">MINES</h2>
+        <p class="text-lg text-zinc-400">Reveal gems, avoid mines. Cash out anytime.</p>
+      </div>
+      <div class="flex flex-col lg:flex-row gap-12 justify-center items-start">
+        <div class="w-full lg:w-80 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+          <div class="mb-6">
+            <label class="block text-sm text-zinc-400 mb-2">Bet Amount ($)</label>
+            <input type="number" id="minesBet" value="1" step="0.1" class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center"/>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm text-zinc-400 mb-2">Number of Mines (1-24)</label>
+            <input type="range" id="minesCount" min="1" max="24" value="3" class="w-full accent-emerald-500"/>
+            <p class="text-center mt-2"><span id="minesValue">3</span> mines</p>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm text-zinc-400 mb-2">Gems Revealed</label>
+            <p class="text-2xl font-bold text-center text-emerald-400" id="gemsRevealed">0</p>
+          </div>
+          <div class="mb-6">
+            <label class="block text-sm text-zinc-400 mb-2">Current Multiplier</label>
+            <p class="text-2xl font-bold text-center text-emerald-400" id="minesMultiplier">1.00x</p>
+          </div>
+          <button id="minesBetBtn" onclick="startMines()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-xl font-bold mb-4">BET</button>
+          <button id="cashoutBtn" onclick="cashoutMines()" class="w-full py-4 bg-purple-600 hover:bg-purple-500 rounded-lg text-xl font-bold hidden">CASH OUT</button>
+        </div>
+
+        <div class="grid grid-cols-5 gap-2 max-w-[340px] mx-auto">
+          <div id="minesGrid" class="col-span-5 grid grid-cols-5 gap-2"></div>
+        </div>
+      </div>
+      <p class="text-center mt-8 text-zinc-500">Multiplier increases with each gem. Hit a mine and lose the bet.</p>
+    </section>
+
+    <!-- Other game sections (crash, dice, limbo, blackjack) can be added here as before -->
+
+  </main>
+
+  <!-- Result Modal -->
+  <div id="resultModal" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
+    <div class="bg-zinc-900 p-8 rounded-xl text-center max-w-md w-11/12">
+      <h3 id="resultTitle" class="text-3xl font-bold mb-4 text-white"></h3>
+      <p id="resultMessage" class="text-xl mb-6 text-zinc-300"></p>
+      <button onclick="closeResultModal()" class="px-8 py-3 bg-purple-600 hover:bg-purple-500 rounded-lg text-lg font-bold">OK</button>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="authModal" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50">
+    <div class="bg-zinc-900 p-8 rounded-xl max-w-md w-11/12">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold text-white">Account</h3>
+        <button onclick="closeAuthModal()" class="text-zinc-400 hover:text-white text-xl">×</button>
+      </div>
+
+      <div class="flex mb-6 border-b border-zinc-700">
+        <button onclick="showAuthTab('login')" class="flex-1 py-3 font-medium auth-tab active text-white border-b-2 border-purple-600">Login</button>
+        <button onclick="showAuthTab('register')" class="flex-1 py-3 font-medium auth-tab text-zinc-400">Register</button>
+      </div>
+
+      <div id="loginForm">
+        <div class="mb-4">
+          <label class="block text-sm text-zinc-400 mb-2">Username</label>
+          <input type="text" id="loginUsername" class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-purple-500"/>
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm text-zinc-400 mb-2">Password</label>
+          <input type="password" id="loginPassword" class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-purple-500"/>
+        </div>
+        <button onclick="fakeLogin()" class="w-full py-4 bg-purple-600 hover:bg-purple-500 rounded-lg text-xl font-bold">Login</button>
+      </div>
+
+      <div id="registerForm" class="hidden">
+        <div class="mb-4">
+          <label class="block text-sm text-zinc-400 mb-2">Username</label>
+          <input type="text" id="regUsername" class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-purple-500"/>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm text-zinc-400 mb-2">Password</label>
+          <input type="password" id="regPassword" class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-purple-500"/>
+        </div>
+        <div class="mb-6">
+          <label class="block text-sm text-zinc-400 mb-2">Confirm Password</label>
+          <input type="password" id="regConfirm" class="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg focus:outline-none focus:border-purple-500"/>
+        </div>
+        <button onclick="fakeRegister()" class="w-full py-4 bg-purple-600 hover:bg-purple-500 rounded-lg text-xl font-bold">Register</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Persistent Auth
+    let currentUser = localStorage.getItem('vantabet_username') || null;
+
+    function updateAuthUI() {
+      const area = document.getElementById('authArea');
+      if (currentUser) {
+        area.innerHTML = `
+          <span class="text-lg font-medium text-purple-300 mr-4">Welcome, ${currentUser}</span>
+          <button onclick="logout()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm">Logout</button>
+        `;
+        // Show admin panel ONLY for Vantaadmin
+        document.getElementById('adminPanel').classList.toggle('hidden', currentUser !== 'Vantaadmin');
+      } else {
+        area.innerHTML = `
+          <button onclick="openAuthModal('login')" class="px-4 py-2 text-purple-300 hover:text-purple-100">Login</button>
+          <span class="text-zinc-500 mx-2">/</span>
+          <button onclick="openAuthModal('register')" class="px-4 py-2 text-purple-300 hover:text-purple-100">Register</button>
+        `;
+        document.getElementById('adminPanel').classList.add('hidden');
+      }
+    }
+
+    function openAuthModal(tab = 'login') {
+      showAuthTab(tab);
+      document.getElementById('authModal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.add('hidden');
+    }
+
+    function showAuthTab(tab) {
+      document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+      document.querySelectorAll('.auth-tab').forEach(btn => {
+        btn.classList.remove('active', 'text-white', 'border-b-2', 'border-purple-600');
+        btn.classList.add('text-zinc-400');
+      });
+      const active = document.querySelector(`button[onclick="showAuthTab('${tab}')"]`);
+      if (active) active.classList.add('active', 'text-white', 'border-b-2', 'border-purple-600');
+    }
+
+    function fakeLogin() {
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (!username || !password) return alert('Fill username and password');
+      // Special admin check
+      if (username === 'Vantaadmin' && password === '12345') {
+        localStorage.setItem('vantabet_username', username);
+        currentUser = username;
+        updateAuthUI();
+        closeAuthModal();
+        alert(`Admin access granted, ${username}!`);
+        return;
+      }
+      // Normal login
+      localStorage.setItem('vantabet_username', username);
+      currentUser = username;
+      updateAuthUI();
+      closeAuthModal();
+      alert(`Welcome, ${username}!`);
+    }
+
+    function fakeRegister() {
+      const username = document.getElementById('regUsername').value.trim();
+      const pass = document.getElementById('regPassword').value;
+      const confirm = document.getElementById('regConfirm').value;
+      if (!username || !pass || pass !== confirm) return alert('Check inputs');
+      localStorage.setItem('vantabet_username', username);
+      currentUser = username;
+      updateAuthUI();
+      closeAuthModal();
+      alert(`Registered! Welcome, ${username}`);
+    }
+
+    function logout() {
+      localStorage.removeItem('vantabet_username');
+      currentUser = null;
+      updateAuthUI();
+      alert('Logged out');
+    }
+
+    // Auto-login on load
+    updateAuthUI();
+
+    // Admin balance setter
+    function setAdminBalance() {
+      const amount = parseFloat(document.getElementById('adminSetBalance').value);
+      if (!isNaN(amount) && amount >= 0) {
+        balance = amount;
+        updateBalance();
+        showResult('Balance Set', `New balance: $${amount.toFixed(2)}`);
+      } else {
+        showResult('Error', 'Enter a valid positive number');
+      }
+    }
+
+    // Debug toggle for mines
+    let showMinesDebug = false;
+    document.getElementById('showMinesToggle')?.addEventListener('change', e => {
+      showMinesDebug = e.target.checked;
+    });
+
+    // Balance
+    let balance = 500.00;
+    const balanceEl = document.getElementById('balance');
+    function updateBalance() { balanceEl.textContent = balance.toFixed(2); }
+    updateBalance();
+
+    // Tab switch
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-purple-600', 'text-white');
+        btn.classList.add('text-zinc-400');
+      });
+      const active = document.querySelector(`button[onclick="showTab('${tabId}')"]`);
+      if (active) active.classList.add('border-purple-600', 'text-white');
+    }
+    showTab('home');
+
+    // Result modal
+    function showResult(title, message) {
+      document.getElementById('resultTitle').textContent = title;
+      document.getElementById('resultMessage').innerHTML = message;
+      document.getElementById('resultModal').classList.remove('hidden');
+    }
+    function closeResultModal() {
+      document.getElementById('resultModal').classList.add('hidden');
+    }
+
+    // Plinko logic
+    function playPlinko() {
+      const bet = parseFloat(document.getElementById('plinkoBet').value) || 0;
+      if (bet <= 0 || bet > balance) return showResult('Error', 'Invalid bet');
+      balance -= bet; updateBalance();
+
+      const ball = document.getElementById('plinkoBall');
+      ball.classList.remove('hidden');
+      let x = 260; // start center
+      let y = 30;
+      ball.style.left = x + 'px';
+      ball.style.top = y + 'px';
+
+      const interval = setInterval(() => {
+        y += 32;
+        // Random bounce left/right
+        x += (Math.random() < 0.5 ? -1 : 1) * (20 + Math.random() * 25);
+        x = Math.max(60, Math.min(460, x));
+
+        ball.style.left = x + 'px';
+        ball.style.top = y + 'px';
+
+        if (y > 380) {
+          clearInterval(interval);
+          // Determine bin (9 bins)
+          const bin = Math.floor((x - 60) / 45); // approx bin width
+          const mults = [0.2, 0.5, 1, 2, 5, 10, 25, 50, 100];
+          const finalMult = mults[Math.min(Math.max(bin, 0), 8)];
+          const payout = bet * finalMult;
+          balance += payout; updateBalance();
+          showResult(
+            finalMult >= 5 ? 'Huge Win!' : finalMult >= 1 ? 'Good Drop' : 'Ouch',
+            `Landed on ${finalMult}x<br>${finalMult >= 1 ? 'Won $' + (payout - bet).toFixed(2) : 'Lost $' + bet.toFixed(2)}`
+          );
+          setTimeout(() => ball.classList.add('hidden'), 1500);
+        }
+      }, 70);
+    }
+
+    // Mines logic with debug reveal
+    let minesGameActive = false, minesPositions = [], revealed = 0, minesBet = 0;
+    const gridSize = 25;
+
+    function startMines() {
+      if (minesGameActive) return;
+      minesBet = parseFloat(document.getElementById('minesBet').value) || 0;
+      if (minesBet <= 0 || minesBet > balance) return showResult('Error', 'Invalid bet');
+      balance -= minesBet; updateBalance();
+      const numMines = parseInt(document.getElementById('minesCount').value);
+      minesPositions = []; revealed = 0; minesGameActive = true;
+      document.getElementById('gemsRevealed').textContent = 0;
+      document.getElementById('minesMultiplier').textContent = '1.00x';
+      document.getElementById('minesBetBtn').classList.add('hidden');
+      document.getElementById('cashoutBtn').classList.remove('hidden');
+
+      while (minesPositions.length < numMines) {
+        const pos = Math.floor(Math.random() * gridSize);
+        if (!minesPositions.includes(pos)) minesPositions.push(pos);
+      }
+
+      const grid = document.getElementById('minesGrid');
+      grid.innerHTML = '';
+      for (let i = 0; i < gridSize; i++) {
+        const tile = document.createElement('button');
+        tile.className = 'w-16 h-16 bg-zinc-800 rounded-lg flex items-center justify-center text-3xl hover:bg-zinc-700 transition';
+        tile.textContent = '?';
+        tile.onclick = () => revealTile(i, tile);
+        grid.appendChild(tile);
+      }
+
+      // Admin debug: reveal mines immediately if toggled
+      if (showMinesDebug) {
+        document.querySelectorAll('#minesGrid button').forEach((tile, i) => {
+          if (minesPositions.includes(i)) {
+            tile.textContent = '💣';
+            tile.classList.add('bg-red-900/50');
+          }
+        });
+      }
+    }
+
+    function revealTile(index, tile) {
+      if (!minesGameActive || tile.disabled) return;
+      tile.disabled = true;
+      if (minesPositions.includes(index)) {
+        tile.textContent = '💣';
+        tile.classList.add('bg-red-900');
+        showResult('Mine Hit!', `Lost $${minesBet.toFixed(2)}`);
+        endMines(false);
+      } else {
+        tile.textContent = '💎';
+        tile.classList.add('bg-emerald-900');
+        revealed++;
+        document.getElementById('gemsRevealed').textContent = revealed;
+        const mult = (1 + revealed * 0.18).toFixed(2);
+        document.getElementById('minesMultiplier').textContent = mult + 'x';
+      }
+    }
+
+    function cashoutMines() {
+      if (!minesGameActive) return;
+      const mult = parseFloat(document.getElementById('minesMultiplier').textContent);
+      const payout = minesBet * mult;
+      balance += payout; updateBalance();
+      showResult('Cashed Out!', `At ${mult}x<br>Won $${(payout - minesBet).toFixed(2)}`);
+      endMines(true);
+    }
+
+    function endMines(won) {
+      minesGameActive = false;
+      document.getElementById('cashoutBtn').classList.add('hidden');
+      document.getElementById('minesBetBtn').classList.remove('hidden');
+      document.querySelectorAll('#minesGrid button').forEach(t => t.disabled = true);
+
+      // Debug reveal at end too
+      if (showMinesDebug) {
+        document.querySelectorAll('#minesGrid button').forEach((tile, i) => {
+          if (minesPositions.includes(i)) {
+            tile.textContent = '💣';
+            tile.classList.add('bg-red-900');
+          }
+        });
+      }
+    }
+
+    // Add your other game logic (crash, dice, limbo, blackjack) here as needed
+
+  </script>
+</body>
+</html>
