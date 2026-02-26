@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Rubik', sans-serif; }
-    .peg { width: 8px; height: 8px; background: #a78bfa; border-radius: 50%; }
+    .peg { width: 10px; height: 10px; background: #a78bfa; border-radius: 50%; }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-b from-zinc-950 to-black">
@@ -29,10 +29,9 @@
     </div>
   </header>
 
-  <!-- Admin Panel - only visible for Vantaadmin -->
+  <!-- Admin Panel - only for Vantaadmin / 12345 -->
   <div id="adminPanel" class="fixed bottom-4 right-4 bg-zinc-900 border border-purple-700 rounded-lg p-4 shadow-2xl hidden z-50 w-80">
     <h3 class="text-lg font-bold text-purple-400 mb-3">Admin Panel</h3>
-    
     <div class="mb-4">
       <label class="block text-sm text-zinc-400 mb-1">Set Balance</label>
       <div class="flex gap-2">
@@ -40,10 +39,9 @@
         <button onclick="setAdminBalance()" class="px-4 py-2 bg-purple-700 hover:bg-purple-600 rounded-lg text-sm font-medium">Apply</button>
       </div>
     </div>
-
     <div class="flex items-center gap-2">
       <input type="checkbox" id="showMinesToggle" class="w-5 h-5 accent-purple-600"/>
-      <label for="showMinesToggle" class="text-sm text-zinc-300">Reveal all mines after placing bet (debug)</label>
+      <label for="showMinesToggle" class="text-sm text-zinc-300">Reveal all mines after bet (debug)</label>
     </div>
   </div>
 
@@ -66,15 +64,9 @@
         <p class="text-xl text-zinc-400">Play originals, slots, and more. Provably fair gaming.</p>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="bg-zinc-900 rounded-xl p-6 text-center border border-zinc-800">
-          <h3 class="text-2xl font-bold mb-2">Casino</h3>
-        </div>
-        <div class="bg-zinc-900 rounded-xl p-6 text-center border border-zinc-800">
-          <h3 class="text-2xl font-bold mb-2">Originals</h3>
-        </div>
-        <div class="bg-zinc-900 rounded-xl p-6 text-center border border-zinc-800">
-          <h3 class="text-2xl font-bold mb-2">Promotions</h3>
-        </div>
+        <div class="bg-zinc-900 rounded-xl p-6 text-center border border-zinc-800"><h3 class="text-2xl font-bold mb-2">Casino</h3></div>
+        <div class="bg-zinc-900 rounded-xl p-6 text-center border border-zinc-800"><h3 class="text-2xl font-bold mb-2">Originals</h3></div>
+        <div class="bg-zinc-900 rounded-xl p-6 text-center border border-zinc-800"><h3 class="text-2xl font-bold mb-2">Promotions</h3></div>
       </div>
     </section>
 
@@ -121,57 +113,47 @@
           <div class="h-32 bg-gradient-to-br from-pink-900 to-pink-600 flex items-center justify-center"><span class="text-3xl font-bold text-white">GATES OF OLYMPUS</span></div>
           <p class="p-3 text-sm text-center text-zinc-400">Pragmatic Play</p>
         </div>
-        <div class="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 hover:scale-105 transition">
-          <div class="h-32 bg-gradient-to-br from-blue-900 to-blue-600 flex items-center justify-center"><span class="text-3xl font-bold text-white">BIG BASS BONANZA</span></div>
-          <p class="p-3 text-sm text-center text-zinc-400">Pragmatic Play</p>
-        </div>
-        <!-- More can be added here -->
       </div>
     </section>
 
-    <!-- PLINKO - Fully working -->
-    <section id="plinko" class="tab-content hidden">
+    <!-- CRASH -->
+    <section id="crash" class="tab-content hidden">
       <div class="text-center my-12">
-        <h2 class="text-5xl font-bold text-purple-400 mb-4">PLINKO</h2>
-        <p class="text-lg text-zinc-400">Drop the ball and watch it bounce to a multiplier</p>
+        <h2 class="text-5xl font-bold text-green-400 mb-4">CRASH</h2>
+        <p class="text-2xl text-zinc-300">Multiplier: <span id="crashMultiplier">1.00</span>x</p>
       </div>
+      <div class="h-64 bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 relative">
+        <canvas id="crashChart" class="w-full h-full"></canvas>
+      </div>
+      <div class="flex justify-center gap-8 mt-12 flex-wrap">
+        <input type="number" id="crashBet" placeholder="Bet amount ($)" class="w-48 px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center"/>
+        <button id="crashBetBtn" onclick="startCrash()" class="px-12 py-4 bg-green-600 hover:bg-green-500 rounded-lg text-xl font-bold">BET</button>
+        <button id="crashCashoutBtn" onclick="cashoutCrash()" class="px-12 py-4 bg-red-600 hover:bg-red-700 rounded-lg text-xl font-bold hidden">CASH OUT</button>
+      </div>
+    </section>
 
+    <!-- DICE -->
+    <section id="dice" class="tab-content hidden">
+      <div class="text-center my-12">
+        <h2 class="text-5xl font-bold text-blue-400 mb-4">DICE</h2>
+        <p class="text-lg text-zinc-400">Roll under/over your target</p>
+      </div>
       <div class="flex flex-col items-center gap-8">
-        <div class="relative w-[520px] h-[420px] bg-zinc-900 rounded-xl border border-zinc-700 overflow-hidden">
-          <!-- Pegs -->
-          <div class="absolute inset-0 flex flex-col justify-between py-10 px-8">
-            ${Array(11).fill().map((_, row) => `
-              <div class="flex justify-${row % 2 === 0 ? 'between' : 'evenly'}">
-                ${Array(row % 2 === 0 ? 9 : 8).fill().map(() => `<div class="peg"></div>`).join('')}
-              </div>
-            `).join('')}
-          </div>
-
-          <!-- Ball -->
-          <div id="plinkoBall" class="absolute w-8 h-8 bg-yellow-400 rounded-full shadow-xl hidden transition-all duration-75 ease-linear"></div>
-
-          <!-- Bins -->
-          <div class="absolute bottom-0 left-0 right-0 h-20 flex justify-between px-6 items-end pb-4 bg-gradient-to-t from-black to-transparent">
-            <span class="text-sm font-bold text-red-400 w-[11%] text-center">0.2x</span>
-            <span class="text-sm font-bold text-orange-400 w-[11%] text-center">0.5x</span>
-            <span class="text-sm font-bold text-yellow-400 w-[11%] text-center">1x</span>
-            <span class="text-sm font-bold text-green-400 w-[11%] text-center">2x</span>
-            <span class="text-sm font-bold text-emerald-400 w-[11%] text-center">5x</span>
-            <span class="text-sm font-bold text-teal-400 w-[11%] text-center">10x</span>
-            <span class="text-sm font-bold text-cyan-400 w-[11%] text-center">25x</span>
-            <span class="text-sm font-bold text-purple-400 w-[11%] text-center">50x</span>
-            <span class="text-sm font-bold text-pink-400 w-[11%] text-center">100x</span>
-          </div>
+        <div class="w-48 h-48 bg-zinc-900 rounded-full flex items-center justify-center border-4 border-blue-700 shadow-xl">
+          <span id="diceResult" class="text-8xl font-bold">?</span>
         </div>
-
         <div class="flex gap-6 flex-wrap justify-center">
-          <input type="number" id="plinkoBet" placeholder="Bet amount ($)" class="w-48 px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center focus:outline-none focus:border-purple-500"/>
-          <button onclick="playPlinko()" class="px-12 py-4 bg-purple-600 hover:bg-purple-500 rounded-lg text-xl font-bold">DROP BALL</button>
+          <select id="diceMode" class="px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-lg">
+            <option value="under">Under 50</option>
+            <option value="over">Over 50</option>
+          </select>
+          <input type="number" id="diceBet" placeholder="Bet amount ($)" class="w-48 px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center"/>
+          <button onclick="rollDice()" class="px-12 py-4 bg-blue-600 hover:bg-blue-500 rounded-lg text-xl font-bold">ROLL</button>
         </div>
       </div>
     </section>
 
-    <!-- MINES (with admin debug toggle) -->
+    <!-- MINES -->
     <section id="mines" class="tab-content hidden">
       <div class="text-center my-12">
         <h2 class="text-5xl font-bold text-emerald-400 mb-4">MINES</h2>
@@ -207,8 +189,90 @@
       <p class="text-center mt-8 text-zinc-500">Multiplier increases with each gem. Hit a mine and lose the bet.</p>
     </section>
 
-    <!-- Other game sections (crash, dice, limbo, blackjack) can be added here as before -->
+    <!-- PLINKO -->
+    <section id="plinko" class="tab-content hidden">
+      <div class="text-center my-12">
+        <h2 class="text-5xl font-bold text-purple-400 mb-4">PLINKO</h2>
+        <p class="text-lg text-zinc-400">Drop the ball and win multipliers</p>
+      </div>
+      <div class="flex flex-col items-center gap-8">
+        <div class="relative w-[520px] h-[420px] bg-zinc-900 rounded-xl border border-zinc-700 overflow-hidden">
+          <!-- Pegs -->
+          <div class="absolute inset-0 flex flex-col justify-between py-10 px-8">
+            ${Array(11).fill().map((_, row) => `
+              <div class="flex justify-${row % 2 === 0 ? 'between' : 'evenly'}">
+                ${Array(row % 2 === 0 ? 9 : 8).fill().map(() => `<div class="peg"></div>`).join('')}
+              </div>
+            `).join('')}
+          </div>
 
+          <!-- Ball -->
+          <div id="plinkoBall" class="absolute w-8 h-8 bg-yellow-400 rounded-full shadow-xl hidden transition-all duration-75 ease-linear"></div>
+
+          <!-- Bins -->
+          <div class="absolute bottom-0 left-0 right-0 h-20 flex justify-between px-6 items-end pb-4 bg-gradient-to-t from-black to-transparent">
+            <span class="text-sm font-bold text-red-400 w-[11%] text-center">0.2x</span>
+            <span class="text-sm font-bold text-orange-400 w-[11%] text-center">0.5x</span>
+            <span class="text-sm font-bold text-yellow-400 w-[11%] text-center">1x</span>
+            <span class="text-sm font-bold text-green-400 w-[11%] text-center">2x</span>
+            <span class="text-sm font-bold text-emerald-400 w-[11%] text-center">5x</span>
+            <span class="text-sm font-bold text-teal-400 w-[11%] text-center">10x</span>
+            <span class="text-sm font-bold text-cyan-400 w-[11%] text-center">25x</span>
+            <span class="text-sm font-bold text-purple-400 w-[11%] text-center">50x</span>
+            <span class="text-sm font-bold text-pink-400 w-[11%] text-center">100x</span>
+          </div>
+        </div>
+
+        <div class="flex gap-6 flex-wrap justify-center">
+          <input type="number" id="plinkoBet" placeholder="Bet amount ($)" class="w-48 px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center"/>
+          <button onclick="playPlinko()" class="px-12 py-4 bg-purple-600 hover:bg-purple-500 rounded-lg text-xl font-bold">DROP BALL</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIMBO -->
+    <section id="limbo" class="tab-content hidden">
+      <div class="text-center my-12">
+        <h2 class="text-5xl font-bold text-yellow-400 mb-4">LIMBO</h2>
+        <p class="text-lg text-zinc-400">Set target, roll multiplier</p>
+      </div>
+      <div class="flex flex-col items-center gap-8">
+        <p class="text-6xl font-bold text-yellow-300" id="limboResult">1.00x</p>
+        <div class="flex gap-6 flex-wrap justify-center">
+          <input type="number" id="limboTarget" step="0.01" placeholder="Target e.g. 2.00" class="w-48 px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center"/>
+          <input type="number" id="limboBet" placeholder="Bet amount ($)" class="w-48 px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center"/>
+          <button onclick="playLimbo()" class="px-12 py-4 bg-yellow-600 hover:bg-yellow-500 rounded-lg text-xl font-bold">ROLL</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- BLACKJACK -->
+    <section id="blackjack" class="tab-content hidden">
+      <div class="text-center my-12">
+        <h2 class="text-5xl font-bold text-red-400 mb-4">BLACKJACK</h2>
+        <p class="text-lg text-zinc-400">Beat the dealer without busting</p>
+      </div>
+      <div class="flex flex-col items-center gap-8">
+        <div class="flex gap-12 flex-wrap justify-center">
+          <div>
+            <h3 class="text-xl mb-2">Dealer</h3>
+            <div id="dealerHand" class="flex gap-2"></div>
+            <p id="dealerScore" class="mt-2 text-center"></p>
+          </div>
+          <div>
+            <h3 class="text-xl mb-2">You</h3>
+            <div id="playerHand" class="flex gap-2"></div>
+            <p id="playerScore" class="mt-2 text-center"></p>
+          </div>
+        </div>
+        <div class="flex gap-6 flex-wrap justify-center">
+          <input type="number" id="blackjackBet" placeholder="Bet amount ($)" class="w-48 px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-center"/>
+          <button id="bjDeal" onclick="dealBlackjack()" class="px-12 py-4 bg-red-600 hover:bg-red-500 rounded-lg text-xl font-bold">DEAL</button>
+          <button id="bjHit" onclick="hitBlackjack()" class="px-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg text-lg font-bold hidden">HIT</button>
+          <button id="bjStand" onclick="standBlackjack()" class="px-8 py-3 bg-green-600 hover:bg-green-500 rounded-lg text-lg font-bold hidden">STAND</button>
+        </div>
+      </div>
+    </section>
   </main>
 
   <!-- Result Modal -->
@@ -227,12 +291,10 @@
         <h3 class="text-2xl font-bold text-white">Account</h3>
         <button onclick="closeAuthModal()" class="text-zinc-400 hover:text-white text-xl">×</button>
       </div>
-
       <div class="flex mb-6 border-b border-zinc-700">
         <button onclick="showAuthTab('login')" class="flex-1 py-3 font-medium auth-tab active text-white border-b-2 border-purple-600">Login</button>
         <button onclick="showAuthTab('register')" class="flex-1 py-3 font-medium auth-tab text-zinc-400">Register</button>
       </div>
-
       <div id="loginForm">
         <div class="mb-4">
           <label class="block text-sm text-zinc-400 mb-2">Username</label>
@@ -244,7 +306,6 @@
         </div>
         <button onclick="fakeLogin()" class="w-full py-4 bg-purple-600 hover:bg-purple-500 rounded-lg text-xl font-bold">Login</button>
       </div>
-
       <div id="registerForm" class="hidden">
         <div class="mb-4">
           <label class="block text-sm text-zinc-400 mb-2">Username</label>
@@ -264,7 +325,7 @@
   </div>
 
   <script>
-    // Persistent Auth
+    // Auth + Admin
     let currentUser = localStorage.getItem('vantabet_username') || null;
 
     function updateAuthUI() {
@@ -274,7 +335,6 @@
           <span class="text-lg font-medium text-purple-300 mr-4">Welcome, ${currentUser}</span>
           <button onclick="logout()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm">Logout</button>
         `;
-        // Show admin panel ONLY for Vantaadmin
         document.getElementById('adminPanel').classList.toggle('hidden', currentUser !== 'Vantaadmin');
       } else {
         area.innerHTML = `
@@ -310,7 +370,6 @@
       const username = document.getElementById('loginUsername').value.trim();
       const password = document.getElementById('loginPassword').value;
       if (!username || !password) return alert('Fill username and password');
-      // Special admin check
       if (username === 'Vantaadmin' && password === '12345') {
         localStorage.setItem('vantabet_username', username);
         currentUser = username;
@@ -319,7 +378,6 @@
         alert(`Admin access granted, ${username}!`);
         return;
       }
-      // Normal login
       localStorage.setItem('vantabet_username', username);
       currentUser = username;
       updateAuthUI();
@@ -346,10 +404,8 @@
       alert('Logged out');
     }
 
-    // Auto-login on load
     updateAuthUI();
 
-    // Admin balance setter
     function setAdminBalance() {
       const amount = parseFloat(document.getElementById('adminSetBalance').value);
       if (!isNaN(amount) && amount >= 0) {
@@ -361,7 +417,6 @@
       }
     }
 
-    // Debug toggle for mines
     let showMinesDebug = false;
     document.getElementById('showMinesToggle')?.addEventListener('change', e => {
       showMinesDebug = e.target.checked;
@@ -373,7 +428,7 @@
     function updateBalance() { balanceEl.textContent = balance.toFixed(2); }
     updateBalance();
 
-    // Tab switch
+    // Tabs
     function showTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
       document.getElementById(tabId).classList.remove('hidden');
@@ -396,46 +451,7 @@
       document.getElementById('resultModal').classList.add('hidden');
     }
 
-    // Plinko logic
-    function playPlinko() {
-      const bet = parseFloat(document.getElementById('plinkoBet').value) || 0;
-      if (bet <= 0 || bet > balance) return showResult('Error', 'Invalid bet');
-      balance -= bet; updateBalance();
-
-      const ball = document.getElementById('plinkoBall');
-      ball.classList.remove('hidden');
-      let x = 260; // start center
-      let y = 30;
-      ball.style.left = x + 'px';
-      ball.style.top = y + 'px';
-
-      const interval = setInterval(() => {
-        y += 32;
-        // Random bounce left/right
-        x += (Math.random() < 0.5 ? -1 : 1) * (20 + Math.random() * 25);
-        x = Math.max(60, Math.min(460, x));
-
-        ball.style.left = x + 'px';
-        ball.style.top = y + 'px';
-
-        if (y > 380) {
-          clearInterval(interval);
-          // Determine bin (9 bins)
-          const bin = Math.floor((x - 60) / 45); // approx bin width
-          const mults = [0.2, 0.5, 1, 2, 5, 10, 25, 50, 100];
-          const finalMult = mults[Math.min(Math.max(bin, 0), 8)];
-          const payout = bet * finalMult;
-          balance += payout; updateBalance();
-          showResult(
-            finalMult >= 5 ? 'Huge Win!' : finalMult >= 1 ? 'Good Drop' : 'Ouch',
-            `Landed on ${finalMult}x<br>${finalMult >= 1 ? 'Won $' + (payout - bet).toFixed(2) : 'Lost $' + bet.toFixed(2)}`
-          );
-          setTimeout(() => ball.classList.add('hidden'), 1500);
-        }
-      }, 70);
-    }
-
-    // Mines logic with debug reveal
+    // MINES (already working - kept as is with debug)
     let minesGameActive = false, minesPositions = [], revealed = 0, minesBet = 0;
     const gridSize = 25;
 
@@ -466,7 +482,6 @@
         grid.appendChild(tile);
       }
 
-      // Admin debug: reveal mines immediately if toggled
       if (showMinesDebug) {
         document.querySelectorAll('#minesGrid button').forEach((tile, i) => {
           if (minesPositions.includes(i)) {
@@ -509,8 +524,6 @@
       document.getElementById('cashoutBtn').classList.add('hidden');
       document.getElementById('minesBetBtn').classList.remove('hidden');
       document.querySelectorAll('#minesGrid button').forEach(t => t.disabled = true);
-
-      // Debug reveal at end too
       if (showMinesDebug) {
         document.querySelectorAll('#minesGrid button').forEach((tile, i) => {
           if (minesPositions.includes(i)) {
@@ -521,7 +534,199 @@
       }
     }
 
-    // Add your other game logic (crash, dice, limbo, blackjack) here as needed
+    // CRASH
+    let crashInterval, crashMultiplier = 1, crashBet = 0, crashActive = false;
+    function startCrash() {
+      crashBet = parseFloat(document.getElementById('crashBet').value) || 0;
+      if (crashBet <= 0 || crashBet > balance) return showResult('Error', 'Invalid bet amount');
+      balance -= crashBet; updateBalance();
+      crashActive = true; crashMultiplier = 1;
+      document.getElementById('crashMultiplier').textContent = '1.00';
+      document.getElementById('crashBetBtn').classList.add('hidden');
+      document.getElementById('crashCashoutBtn').classList.remove('hidden');
+      crashInterval = setInterval(() => {
+        crashMultiplier += 0.03 + Math.random() * 0.08;
+        document.getElementById('crashMultiplier').textContent = crashMultiplier.toFixed(2);
+        if (Math.random() > 0.94) {
+          clearInterval(crashInterval);
+          crashActive = false;
+          showResult('Crashed', `Crashed at ${crashMultiplier.toFixed(2)}x<br>Lost $${crashBet.toFixed(2)}`);
+          resetCrash();
+        }
+      }, 140);
+    }
+    function cashoutCrash() {
+      if (!crashActive) return;
+      clearInterval(crashInterval); crashActive = false;
+      const payout = crashBet * crashMultiplier;
+      balance += payout; updateBalance();
+      showResult('Cashed Out', `At ${crashMultiplier.toFixed(2)}x<br>Won $${(payout - crashBet).toFixed(2)}`);
+      resetCrash();
+    }
+    function resetCrash() {
+      document.getElementById('crashBetBtn').classList.remove('hidden');
+      document.getElementById('crashCashoutBtn').classList.add('hidden');
+    }
+
+    // DICE
+    function rollDice() {
+      const bet = parseFloat(document.getElementById('diceBet').value) || 0;
+      if (bet <= 0 || bet > balance) return showResult('Error', 'Invalid bet');
+      balance -= bet; updateBalance();
+      const roll = Math.floor(Math.random() * 100) + 1;
+      document.getElementById('diceResult').textContent = roll;
+      const mode = document.getElementById('diceMode').value;
+      const win = (mode === 'under' && roll < 50) || (mode === 'over' && roll > 50);
+      if (win) {
+        const payout = bet * 1.98;
+        balance += payout; updateBalance();
+        showResult('You Win!', `Rolled ${roll}<br>Won $${(payout - bet).toFixed(2)}`);
+      } else {
+        showResult('Loss', `Rolled ${roll}<br>Lost $${bet.toFixed(2)}`);
+      }
+    }
+
+    // PLINKO
+    function playPlinko() {
+      const bet = parseFloat(document.getElementById('plinkoBet').value) || 0;
+      if (bet <= 0 || bet > balance) return showResult('Error', 'Invalid bet');
+      balance -= bet; updateBalance();
+
+      const ball = document.getElementById('plinkoBall');
+      ball.classList.remove('hidden');
+      let x = 260;
+      let y = 30;
+      ball.style.left = x + 'px';
+      ball.style.top = y + 'px';
+
+      const interval = setInterval(() => {
+        y += 32;
+        x += (Math.random() < 0.5 ? -1 : 1) * (20 + Math.random() * 25);
+        x = Math.max(60, Math.min(460, x));
+        ball.style.left = x + 'px';
+        ball.style.top = y + 'px';
+
+        if (y > 380) {
+          clearInterval(interval);
+          const bin = Math.floor((x - 60) / 45);
+          const mults = [0.2, 0.5, 1, 2, 5, 10, 25, 50, 100];
+          const finalMult = mults[Math.min(Math.max(bin, 0), 8)];
+          const payout = bet * finalMult;
+          balance += payout; updateBalance();
+          showResult(
+            finalMult >= 5 ? 'Huge Win!' : finalMult >= 1 ? 'Good Drop' : 'Ouch',
+            `Landed on ${finalMult}x<br>${finalMult >= 1 ? 'Won $' + (payout - bet).toFixed(2) : 'Lost $' + bet.toFixed(2)}`
+          );
+          setTimeout(() => ball.classList.add('hidden'), 1500);
+        }
+      }, 70);
+    }
+
+    // LIMBO
+    function playLimbo() {
+      const bet = parseFloat(document.getElementById('limboBet').value) || 0;
+      const target = parseFloat(document.getElementById('limboTarget').value) || 2;
+      if (bet <= 0 || bet > balance || target < 1.01) return showResult('Error', 'Invalid input');
+      balance -= bet; updateBalance();
+      const roll = 1 + Math.random() * 99;
+      document.getElementById('limboResult').textContent = roll.toFixed(2) + 'x';
+      if (roll < target) {
+        const payout = bet * (99 / (target - 1));
+        balance += payout; updateBalance();
+        showResult('Win!', `Rolled ${roll.toFixed(2)}x < ${target}x<br>Won $${(payout - bet).toFixed(2)}`);
+      } else {
+        showResult('Loss', `Rolled ${roll.toFixed(2)}x >= ${target}x<br>Lost $${bet.toFixed(2)}`);
+      }
+    }
+
+    // BLACKJACK
+    const suits = ['♥','♦','♣','♠'];
+    const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+    let deck = [], playerHand = [], dealerHand = [], bjBet = 0, bjActive = false;
+
+    function createDeck() {
+      deck = [];
+      for (let s of suits) for (let r of ranks) deck.push({rank: r, suit: s});
+      deck.sort(() => Math.random() - 0.5);
+    }
+
+    function cardValue(card) {
+      if (['J','Q','K'].includes(card.rank)) return 10;
+      if (card.rank === 'A') return 11;
+      return parseInt(card.rank);
+    }
+
+    function handScore(hand) {
+      let score = 0, aces = 0;
+      for (let c of hand) {
+        let v = cardValue(c);
+        if (v === 11) aces++;
+        score += v;
+      }
+      while (score > 21 && aces > 0) { score -= 10; aces--; }
+      return score;
+    }
+
+    function renderHand(hand, elId) {
+      document.getElementById(elId).innerHTML = hand.map(c => 
+        `<span class="px-3 py-2 bg-zinc-800 rounded text-xl border border-zinc-700">${c.rank}${c.suit}</span>`
+      ).join('');
+    }
+
+    function dealBlackjack() {
+      bjBet = parseFloat(document.getElementById('blackjackBet').value) || 0;
+      if (bjBet <= 0 || bjBet > balance) return showResult('Error', 'Invalid bet');
+      balance -= bjBet; updateBalance();
+      createDeck();
+      playerHand = [deck.pop(), deck.pop()];
+      dealerHand = [deck.pop(), deck.pop()];
+      renderHand(playerHand, 'playerHand');
+      renderHand([dealerHand[0], {rank:'?',suit:''}], 'dealerHand');
+      document.getElementById('playerScore').textContent = `Score: ${handScore(playerHand)}`;
+      document.getElementById('dealerScore').textContent = 'Score: ?';
+      bjActive = true;
+      document.getElementById('bjDeal').classList.add('hidden');
+      document.getElementById('bjHit').classList.remove('hidden');
+      document.getElementById('bjStand').classList.remove('hidden');
+      if (handScore(playerHand) === 21) standBlackjack();
+    }
+
+    function hitBlackjack() {
+      if (!bjActive) return;
+      playerHand.push(deck.pop());
+      renderHand(playerHand, 'playerHand');
+      document.getElementById('playerScore').textContent = `Score: ${handScore(playerHand)}`;
+      if (handScore(playerHand) > 21) {
+        showResult('Bust!', `You busted<br>Lost $${bjBet.toFixed(2)}`);
+        resetBj();
+      }
+    }
+
+    function standBlackjack() {
+      if (!bjActive) return;
+      while (handScore(dealerHand) < 17) dealerHand.push(deck.pop());
+      renderHand(dealerHand, 'dealerHand');
+      document.getElementById('dealerScore').textContent = `Score: ${handScore(dealerHand)}`;
+      const pScore = handScore(playerHand), dScore = handScore(dealerHand);
+      if (dScore > 21 || pScore > dScore) {
+        const payout = bjBet * 2;
+        balance += payout; updateBalance();
+        showResult('You Win!', `Won $${(payout - bjBet).toFixed(2)}`);
+      } else if (pScore === dScore) {
+        balance += bjBet; updateBalance();
+        showResult('Push', 'Tie – bet returned');
+      } else {
+        showResult('Loss', `Dealer wins<br>Lost $${bjBet.toFixed(2)}`);
+      }
+      resetBj();
+    }
+
+    function resetBj() {
+      bjActive = false;
+      document.getElementById('bjDeal').classList.remove('hidden');
+      document.getElementById('bjHit').classList.add('hidden');
+      document.getElementById('bjStand').classList.add('hidden');
+    }
 
   </script>
 </body>
