@@ -355,6 +355,34 @@
         <h2 class="text-3xl font-bold text-white mb-1">Settings</h2>
         <p class="text-[#a1a1aa]">Customize your experience</p>
       </div>
+      
+      <div class="stake-card p-8 max-w-lg mx-auto mb-6">
+        <h3 class="text-xl font-semibold text-white mb-6">Account Details</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm text-[#a1a1aa] mb-2">Username</label>
+            <input type="text" id="settingsUsername" class="w-full px-4 py-3 bg-[#131313] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-[#00c853]" disabled/>
+          </div>
+          <div>
+            <label class="block text-sm text-[#a1a1aa] mb-2">New Password</label>
+            <input type="password" id="settingsPassword" placeholder="Enter new password" class="w-full px-4 py-3 bg-[#131313] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-[#00c853]"/>
+          </div>
+          <div>
+            <label class="block text-sm text-[#a1a1aa] mb-2">Account Created</label>
+            <input type="text" id="settingsCreated" class="w-full px-4 py-3 bg-[#131313] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-[#00c853]" disabled/>
+          </div>
+          <div>
+            <label class="block text-sm text-[#a1a1aa] mb-2">Total Wagered</label>
+            <input type="text" id="settingsWagered" class="w-full px-4 py-3 bg-[#131313] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-[#00c853]" disabled/>
+          </div>
+          <div>
+            <label class="block text-sm text-[#a1a1aa] mb-2">Current Balance</label>
+            <input type="text" id="settingsBalance" class="w-full px-4 py-3 bg-[#131313] border border-[#2a2a2a] rounded-lg text-[#00c853] font-bold focus:outline-none" disabled/>
+          </div>
+          <button onclick="saveAccountSettings()" class="w-full py-3 bg-[#00c853] hover:bg-[#00e676] text-black rounded-lg font-bold mt-4">Save Changes</button>
+        </div>
+      </div>
+      
       <div class="stake-card p-8 max-w-lg mx-auto">
         <h3 class="text-xl font-semibold text-white mb-6">Theme</h3>
         <div class="flex gap-4">
@@ -1164,11 +1192,14 @@
 
       localStorage.setItem(`vantabet_password_${username}`, pass);
       localStorage.setItem(`vantabet_balance_${username}`, '500.00');
+      localStorage.setItem(`vantabet_created_${username}`, new Date().toLocaleDateString());
+      localStorage.setItem(`vantabet_wagered_${username}`, '0');
 
       localStorage.setItem('vantabet_current_user', username);
       currentUser = username;
       updateAuthUI();
       loadBalance();
+      loadAccountSettings();
       closeAuthModal();
       alert(`Account created! Welcome, ${username}!`);
     }
@@ -1187,11 +1218,52 @@
       localStorage.setItem('vantabet_theme', theme);
       showResult('Theme', theme === 'dark' ? 'Dark theme applied.' : 'Light theme applied.');
     }
+
+    function loadAccountSettings() {
+      const username = localStorage.getItem('vantabet_current_user') || 'Guest';
+      const created = localStorage.getItem(`vantabet_created_${username}`) || new Date().toLocaleDateString();
+      const wagered = parseFloat(localStorage.getItem(`vantabet_wagered_${username}`)) || 0;
+      
+      document.getElementById('settingsUsername').value = username;
+      document.getElementById('settingsCreated').value = created;
+      document.getElementById('settingsWagered').value = '$' + wagered.toFixed(2);
+      document.getElementById('settingsBalance').value = '$' + balance.toFixed(2);
+    }
+
+    function saveAccountSettings() {
+      const newPassword = document.getElementById('settingsPassword').value;
+      const username = localStorage.getItem('vantabet_current_user');
+      
+      if (!username) {
+        showResult('Error', 'Please login to save settings');
+        return;
+      }
+      
+      if (newPassword && newPassword.length >= 4) {
+        localStorage.setItem(`vantabet_password_${username}`, newPassword);
+        document.getElementById('settingsPassword').value = '';
+        showResult('Success', 'Password updated successfully!');
+      } else if (newPassword) {
+        showResult('Error', 'Password must be at least 4 characters');
+      } else {
+        showResult('Success', 'Settings saved!');
+      }
+    }
+
+    function addWagered(amount) {
+      const username = localStorage.getItem('vantabet_current_user');
+      if (username) {
+        const current = parseFloat(localStorage.getItem(`vantabet_wagered_${username}`)) || 0;
+        localStorage.setItem(`vantabet_wagered_${username}`, current + amount);
+      }
+    }
+
     if (localStorage.getItem('vantabet_theme') === 'light') document.documentElement.classList.add('theme-light');
 
     // Initial load
     updateAuthUI();
     loadBalance();
+    loadAccountSettings();
 
     // Tab switch – main nav: Home, Originals, Settings. Sub-games (crash, dice, etc.) show Originals as active.
     const SUB_GAMES = ['crash', 'dice', 'mines', 'plinko', 'limbo', 'blackjack', 'mines1000', 'roulette', 'keno', 'coinflip', 'tower', 'rps', 'racing', 'fishing', 'goal'];
@@ -1209,6 +1281,7 @@
       });
 
       if (tabId === 'crash') drawCrashChart();
+      if (tabId === 'settings') loadAccountSettings();
     }
     showTab('originals');
 
