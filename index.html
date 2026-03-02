@@ -5,7 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"/>
   <title>Eclipse – Social Casino</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pubnub@7/dist/pubnub.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    // REPLACE THIS with your deployed server URL
+    const API_URL = "https://eclipse.yourname.up.railway.app";
+    let socket = null;
+    
+    // Connect to server
+    try {
+      socket = io(API_URL);
+      
+      socket.on('connect', () => console.log('Connected to server!'));
+      
+      socket.on('chat', (msg) => {
+        if (!chatMessages.find(m => m.message === msg.message && m.user === msg.user)) {
+          chatMessages.push(msg);
+          if (chatMessages.length > 100) chatMessages = chatMessages.slice(-100);
+          renderChat();
+        }
+      });
+      
+      socket.on('update', (data) => {
+        if (data.type === 'bet') {
+          updateLeaderboards();
+        }
+      });
+    } catch(e) {
+      console.log('Offline mode');
+    }
+    
+    window.sendToServer = (type, data, callback) => {
+      if (socket && socket.connected) {
+        socket.emit(type, data);
+      }
+      // Also try REST API
+      fetch(API_URL + '/api/' + type, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(r => r.json()).then(callback || (() => {})).catch(() => {});
+    };
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -1883,46 +1923,12 @@
     // Global variables - defined first to avoid reference errors
     const SUB_GAMES = ['crash', 'dice', 'mines', 'plinko', 'limbo', 'blackjack', 'mines1000', 'roulette', 'keno', 'coinflip', 'tower', 'rps', 'racing', 'fishing', 'goal', 'russianroulette', 'baccarat', 'poker', 'threecard', 'scratch', 'powerball', 'horserace', 'dograce', 'wheel', 'hilo'];
     
-    // PubNub Config - Get free keys at https://admin.pubnub.com
-    const PN_KEYS = {
-      publishKey: 'sub-c-0470159f-d4fa-4d67-9792-1d02f0ec6528',
-      subscribeKey: 'sub-c-0470159f-d4fa-4d67-9792-1d02f0ec6528'
-    };
-    
-    let pubnub = null;
-    
-    // Initialize PubNub if configured
-    if (PN_KEYS.publishKey !== 'YOUR_PUBLISH_KEY') {
-      try {
-        pubnub = new PubNub({
-          publishKey: PN_KEYS.publishKey,
-          subscribeKey: PN_KEYS.subscribeKey,
-          userId: 'eclipse_' + Math.random().toString(36).substr(2, 9)
-        });
-        
-        pubnub.subscribe({ channels: ['eclipse_chat'] });
-        pubnub.addListener({
-          message: function(event) {
-            const msg = event.message;
-            if (!chatMessages.find(m => m.message === msg.message && m.user === msg.user && m.time === msg.time)) {
-              chatMessages.push(msg);
-              if (chatMessages.length > 100) chatMessages = chatMessages.slice(-100);
-              renderChat();
-            }
-          }
-        });
-        console.log('PubNub connected!');
-      } catch(e) {
-        console.log('PubNub init failed:', e);
-      }
-    }
-    
-    // Chat - Uses localStorage + PubNub for global sync
+    // Chat - Works across tabs on same device. For global chat, get proper PubNub keys (both pub-c and sub-c).
     let chatMessages = JSON.parse(localStorage.getItem('vantabet_chat') || '[]');
     let isTyping = false;
     let typingTimeout = null;
     
-    // Sync chat across tabs/windows
+    // Sync chat, bets, leaderboards across tabs/windows
     window.addEventListener('storage', (e) => {
       if (e.key === 'vantabet_chat') {
         chatMessages = JSON.parse(e.newValue || '[]');
@@ -1931,6 +1937,13 @@
       if (e.key === 'vantabet_typing') {
         const typingData = JSON.parse(e.newValue || '{}');
         showTypingIndicator(typingData);
+      }
+      if (e.key === 'vantabet_allbets') {
+        updateLeaderboards();
+      }
+      if (e.key === 'vantabet_balance') {
+        balance = parseFloat(e.newValue) || 0;
+        updateBalance();
       }
     });
     
@@ -2758,9 +2771,12 @@
       if (chatMessages.length > 100) chatMessages = chatMessages.slice(-100);
       localStorage.setItem('vantabet_chat', JSON.stringify(chatMessages));
       
-      // Send to PubNub for global sync
-      if (pubnub) {
-        pubnub.publish({ channel: 'eclipse_chat', message: chat });
+      // Local storage sync
+      localStorage.setItem('vantabet_chat', JSON.stringify(chatMessages));
+      
+      // Send to WebSocket for global sync
+      if (window.sendToChat) {
+        window.sendToServer('chat', chat);
       }
       
       input.value = '';
@@ -5183,7 +5199,10 @@
     function dealBlackjack() {
       loadBjTablePlayers();
       
-      if (bjTablePlayers.length < 2) {
+      // Only require 2+ players if in multiplayer (joined a table)
+      const tables = JSON.parse(localStorage.getItem('vantabet_tables') || '[]');
+      const inTable = tables.find(t => t.game === 'blackjack' && t.players.includes(currentUser));
+      if (inTable && bjTablePlayers.length < 2) {
         return showResult('Need More Players', 'Wait for at least 2 players to join the table');
       }
       
