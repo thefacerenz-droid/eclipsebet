@@ -5,45 +5,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"/>
   <title>Eclipse – Social Casino</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script>
-    // REPLACE THIS with your deployed server URL
+    // Using polling for global sync (works on Vercel)
     const API_URL = "https://eclipsebetus.vercel.app";
-    let socket = null;
+    let lastChatTime = 0;
+    let lastBetTime = 0;
     
-    // Connect to server
-    try {
-      socket = io(API_URL);
-      
-      socket.on('connect', () => console.log('Connected to server!'));
-      
-      socket.on('chat', (msg) => {
-        if (!chatMessages.find(m => m.message === msg.message && m.user === msg.user)) {
-          chatMessages.push(msg);
-          if (chatMessages.length > 100) chatMessages = chatMessages.slice(-100);
-          renderChat();
+    // Poll for new messages every 2 seconds
+    setInterval(async () => {
+      try {
+        // Fetch chat
+        const chatRes = await fetch(API_URL + '/api/chats');
+        if (chatRes.ok) {
+          const chats = await chatRes.json();
+          chats.forEach(msg => {
+            if (!chatMessages.find(m => m.message === msg.message && m.user === msg.user && m.time === msg.time)) {
+              chatMessages.push(msg);
+              if (chatMessages.length > 100) chatMessages = chatMessages.slice(-100);
+              renderChat();
+            }
+          });
         }
-      });
-      
-      socket.on('update', (data) => {
-        if (data.type === 'bet') {
+        
+        // Fetch bets
+        const betsRes = await fetch(API_URL + '/api/bets');
+        if (betsRes.ok) {
+          const bets = await betsRes.json();
+          bets.forEach(bet => {
+            addBetRecord(bet.game, bet.bet, bet.profit);
+          });
           updateLeaderboards();
         }
-      });
-    } catch(e) {
-      console.log('Offline mode');
-    }
-    
-    window.sendToServer = (type, data, callback) => {
-      if (socket && socket.connected) {
-        socket.emit(type, data);
+      } catch(e) {
+        // Offline mode
       }
-      // Also try REST API
-      fetch(API_URL + '/api/' + type, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      }).then(r => r.json()).then(callback || (() => {})).catch(() => {});
+    }, 2000);
+    
+    // Send chat to server
+    window.sendToServer = async (type, data) => {
+      try {
+        await fetch(API_URL + '/api/' + type, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } catch(e) {
+        console.log('Server offline');
+      }
     };
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
