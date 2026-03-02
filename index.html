@@ -6,44 +6,49 @@
   <title>Eclipse – Social Casino</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Using free WebSocket echo for global chat
-    let ws = null;
-    let reconnectTimer = null;
+    // Using Vercel server for global chat + polling for bets
+    const API = 'https://eclipsebetus.vercel.app';
     
-    function connectChat() {
+    // Poll for chat messages every 1 second
+    let lastChatCount = 0;
+    setInterval(async () => {
       try {
-        ws = new WebSocket('wss://socketsbay.com/wss/v2/2/5d0709bc2f43dd84a5f8/');
-        
-        ws.onopen = () => console.log('Chat connected!');
-        
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            if (data.message && data.message.includes('"user"')) {
-              const msg = JSON.parse(data.message);
-              if (msg.user && msg.message && !chatMessages.find(m => m.message === msg.message && m.user === msg.user)) {
+        const r = await fetch(API + '/api/chats');
+        if (r.ok) {
+          const chats = await r.json();
+          if (chats.length !== lastChatCount) {
+            lastChatCount = chats.length;
+            chats.forEach(msg => {
+              if (!chatMessages.find(m => m.message === msg.message && m.user === msg.user)) {
                 chatMessages.push(msg);
                 if (chatMessages.length > 50) chatMessages = chatMessages.slice(-50);
                 renderChat();
               }
-            }
-          } catch(e) {}
-        };
-        
-        ws.onclose = () => {
-          reconnectTimer = setTimeout(connectChat, 3000);
-        };
-      } catch(e) {
-        reconnectTimer = setTimeout(connectChat, 3000);
-      }
-    }
+            });
+          }
+        }
+      } catch(e) {}
+    }, 1000);
     
-    connectChat();
+    // Poll for bets
+    setInterval(async () => {
+      try {
+        const r = await fetch(API + '/api/bets');
+        if (r.ok) {
+          updateLeaderboards();
+        }
+      } catch(e) {}
+    }, 2000);
     
-    window.sendChatGlobal = (msg) => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify(msg));
-      }
+    // Send chat
+    window.broadcastChat = async (msg) => {
+      try {
+        await fetch(API + '/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(msg)
+        });
+      } catch(e) {}
     };
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2775,8 +2780,8 @@
       localStorage.setItem('vantabet_chat', JSON.stringify(chatMessages));
       
       // Send to global chat
-      if (window.sendChatGlobal) {
-        window.sendChatGlobal(chat);
+      if (window.broadcastChat) {
+        window.broadcastChat(chat);
       }
       
       input.value = '';
