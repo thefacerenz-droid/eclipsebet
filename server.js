@@ -17,6 +17,7 @@ let chats = [];
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.get('/api/chats', (req, res) => res.json(chats.slice(-50)));
+
 app.post('/api/chat', (req, res) => {
   const msg = req.body;
   chats.push(msg);
