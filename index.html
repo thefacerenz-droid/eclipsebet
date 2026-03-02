@@ -5,50 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"/>
   <title>Eclipse – Social Casino</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pubnub@7/dist/pubnub.min.js"></script>
   <script>
-    // Using Vercel server for global chat + polling for bets
-    const API = 'https://eclipsebetus.vercel.app';
-    
-    // Poll for chat messages every 1 second
-    let lastChatCount = 0;
-    setInterval(async () => {
-      try {
-        const r = await fetch(API + '/api/chats');
-        if (r.ok) {
-          const chats = await r.json();
-          if (chats.length !== lastChatCount) {
-            lastChatCount = chats.length;
-            chats.forEach(msg => {
-              if (!chatMessages.find(m => m.message === msg.message && m.user === msg.user)) {
-                chatMessages.push(msg);
-                if (chatMessages.length > 50) chatMessages = chatMessages.slice(-50);
-                renderChat();
-              }
-            });
-          }
+    // Using YOUR PubNub keys - GLOBAL CHAT!
+    const pubnub = new PubNub({
+      publishKey: 'pub-c-1be42b47-123f-4dbc-861a-e4f171e3179a',
+      subscribeKey: 'sub-c-3ba6b0ff-53ec-4cb4-9359-859e616d3ebc',
+      userId: 'eclipse_user_' + Math.random().toString(36).substr(2, 6)
+    });
+
+    pubnub.subscribe({ channels: ['eclipse-global-chat'] });
+
+    pubnub.addListener({
+      message: function(event) {
+        const msg = event.message;
+        if (msg && msg.user && msg.message && !chatMessages.find(m => m.message === msg.message && m.user === msg.user)) {
+          chatMessages.push(msg);
+          if (chatMessages.length > 50) chatMessages = chatMessages.slice(-50);
+          localStorage.setItem('vantabet_chat', JSON.stringify(chatMessages));
+          renderChat();
         }
-      } catch(e) {}
-    }, 1000);
-    
-    // Poll for bets
-    setInterval(async () => {
-      try {
-        const r = await fetch(API + '/api/bets');
-        if (r.ok) {
-          updateLeaderboards();
-        }
-      } catch(e) {}
-    }, 2000);
-    
-    // Send chat
-    window.broadcastChat = async (msg) => {
-      try {
-        await fetch(API + '/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(msg)
-        });
-      } catch(e) {}
+      }
+    });
+
+    window.sendGlobalChat = (msg) => {
+      pubnub.publish({ channel: 'eclipse-global-chat', message: msg });
     };
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2776,13 +2757,8 @@
       if (chatMessages.length > 100) chatMessages = chatMessages.slice(-100);
       localStorage.setItem('vantabet_chat', JSON.stringify(chatMessages));
       
-      // Local storage sync
-      localStorage.setItem('vantabet_chat', JSON.stringify(chatMessages));
-      
       // Send to global chat
-      if (window.broadcastChat) {
-        window.broadcastChat(chat);
-      }
+      try { window.sendGlobalChat(chat); } catch(e) {}
       
       input.value = '';
       renderChat();
