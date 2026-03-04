@@ -399,14 +399,17 @@
           <button data-tab="wallet" onclick="showTab('wallet')" class="tab-btn px-4 py-2 text-sm font-medium text-[#a1a1aa] hover:text-white rounded-lg hover:bg-white/5 transition">Wallet</button>
           <button data-tab="settings" onclick="showTab('settings')" class="tab-btn px-4 py-2 text-sm font-medium text-[#a1a1aa] hover:text-white rounded-lg hover:bg-white/5 transition">Settings</button>
         </nav>
-        <div id="authArea" class="flex items-center gap-2"></div>
+        <div id="authArea" class="flex items-center gap-2">
+          <button onclick="openAuthModal('login')" class="px-4 py-2 bg-[#222] border border-[#444] hover:border-[#fbbf24] rounded-lg text-sm font-medium text-white transition">Login</button>
+          <button onclick="openAuthModal('register')" class="px-4 py-2 bg-[#fbbf24] hover:bg-[#fcd34d] text-black rounded-lg text-sm font-bold transition">Register</button>
+        </div>
       </div>
       <div class="flex items-center gap-3">
         <div class="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm font-medium">
           <span class="text-[#71717a] text-xs uppercase tracking-wide">Balance</span>
           <div class="text-[#fbbf24] font-bold text-lg">$<span id="balance">500.00</span></div>
         </div>
-        <button onclick="showDepositModal()" class="px-5 py-2.5 bg-gradient-to-r from-[#fbbf24] to-[#d97706] text-black rounded-lg font-bold text-sm hover:from-[#fcd34d] hover:to-[#fbbf24] transition-all shadow-lg shadow-[#fbbf24]/20">DEPOSIT</button>
+        <button onclick="showDepositModal()" id="depositBtn" class="px-5 py-2.5 bg-gradient-to-r from-[#fbbf24] to-[#d97706] text-black rounded-lg font-bold text-sm hover:from-[#fcd34d] hover:to-[#fbbf24] transition-all shadow-lg shadow-[#fbbf24]/20">DEPOSIT</button>
       </div>
     </div>
   </header>
@@ -3662,6 +3665,34 @@
       updateLeaderboards();
     }, 3000);
 
+    // Deposit cooldown timer
+    setInterval(function() {
+      if (!currentUser) return;
+      var account = getGlobalAccount(currentUser);
+      if (!account || !account.lastClaim) return;
+      
+      var now = new Date().getTime();
+      var oneDay = 24 * 60 * 60 * 1000;
+      var timeLeft = oneDay - (now - account.lastClaim);
+      
+      if (timeLeft > 0 && timeLeft <= oneDay) {
+        var hours = Math.floor(timeLeft / (1000 * 60 * 60));
+        var minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        var seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+        var btn = document.getElementById('depositBtn');
+        if (btn) {
+          btn.textContent = hours + ':' + (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+          btn.classList.add('opacity-50');
+        }
+      } else {
+        var btn = document.getElementById('depositBtn');
+        if (btn) {
+          btn.textContent = 'DEPOSIT';
+          btn.classList.remove('opacity-50');
+        }
+      }
+    }, 1000);
+
     // Tab switch – main nav: Home, Originals, Settings. Sub-games (crash, dice, etc.) show Originals as active.
     function showTab(tabId) {
       document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -6905,15 +6936,20 @@
     function showDepositModal() {
       if (!currentUser) { showResult('Error', 'Please login first'); return; }
       
-      const lastClaim = localStorage.getItem(`vantabet_lastclaim_${currentUser}`);
+      // Get account data
+      const account = getGlobalAccount(currentUser);
       const now = new Date().getTime();
       const oneDay = 24 * 60 * 60 * 1000;
       
-      if (lastClaim && (now - parseInt(lastClaim)) < oneDay) {
-        const timeLeft = oneDay - (now - parseInt(lastClaim));
+      // Check cooldown from global account
+      const lastClaim = account?.lastClaim || 0;
+      
+      if (lastClaim && (now - lastClaim) < oneDay) {
+        const timeLeft = oneDay - (now - lastClaim);
         const hours = Math.floor(timeLeft / (1000 * 60 * 60));
         const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-        showResult('Cooldown', `Come back in ${hours}h ${minutes}m`);
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+        showResult('Cooldown', `Come back in ${hours}h ${minutes}m ${seconds}s`);
         return;
       }
       
@@ -6921,7 +6957,16 @@
       balance += bonus;
       updateBalance();
       saveBalance();
-      localStorage.setItem(`vantabet_lastclaim_${currentUser}`, now);
+      
+      // Update global account
+      if (account) {
+        account.lastClaim = now;
+        account.balance = balance;
+        account.transactions = account.transactions || [];
+        account.transactions.unshift({ type: 'Daily Bonus', amount: bonus, symbol: '+', time: new Date().toISOString() });
+        updateGlobalAccount(account);
+      }
+      
       addTransaction('Daily Bonus', bonus, '+');
       showResult('Daily Bonus!', `You received $${bonus.toFixed(2)}!`);
       loadAccountSettings();
