@@ -6,14 +6,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"/>
   <title>Eclipse – Social Casino</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pubnub@7/dist/pubnub.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pubnub/7.4.0/pubnub.min.js"></script>
   <script>
+    // Global variables - initialize first
+    let globalTables = [];
+    let globalBets = [];
+    let globalPlayers = {};
+
     // YOUR PubNub keys - GLOBAL SYNC!
     const pubnub = new PubNub({
       publishKey: 'pub-c-1be42b47-123f-4dbc-861a-e4f171e3179a',
       subscribeKey: 'sub-c-3ba6b0ff-53ec-4cb4-9359-859e616d3ebc',
       userId: 'eclipse_' + Math.random().toString(36).substr(2, 9)
     });
+    
 
     const chatChannel = 'eclipse-chat-room';
     const betsChannel = 'eclipse-bets';
@@ -24,9 +30,6 @@
     pubnub.subscribe({ channels: [chatChannel, betsChannel, tablesChannel, playersChannel, accountsChannel] });
     console.log('PubNub subscribing to all channels');
 
-    let globalBets = [];
-    let globalTables = [];
-    let globalPlayers = {};
     let globalAccounts = {};
 
     // Fetch global accounts on load
